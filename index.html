@@ -253,10 +253,10 @@ img{max-width:100%;display:block;}
 }
 .course-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(11,18,32,0.14);}
 .course-cover{
-  position:relative;height:170px;background-size:cover;background-position:center;
+  position:relative;height:250px;background-size:cover;background-position:center;
   display:flex;align-items:flex-end;padding:14px;
 }
-.course-cover:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,18,32,0) 40%,rgba(11,18,32,.72));}
+.course-cover:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,18,32,0) 58%,rgba(11,18,32,.72));}
 .level-badge{
   position:relative;z-index:1;font-family:'JetBrains Mono',monospace;font-size:11px;
   background:rgba(255,255,255,.92);color:var(--navy);padding:4px 10px;border-radius:999px;font-weight:700;
@@ -265,17 +265,30 @@ img{max-width:100%;display:block;}
   position:absolute;top:10px;left:10px;z-index:1;font-family:'JetBrains Mono',monospace;font-size:10.5px;
   background:#C9A227;color:#16213E;padding:4px 9px;border-radius:999px;font-weight:700;
 }
+.course-badges{position:absolute;top:10px;right:10px;z-index:1;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.cert-badge,.accred-badge{
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;
+  display:flex;align-items:center;gap:4px;white-space:nowrap;
+}
+.cert-badge{background:rgba(46,156,219,.95);color:#fff;}
+.accred-badge{background:rgba(200,16,46,.95);color:#fff;}
 .course-body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:10px;flex:1;}
 .course-body h3{font-size:19px;color:var(--navy);}
 .course-body p{margin:0;color:var(--muted);font-size:13.8px;line-height:1.7;}
-.course-meta{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:14px;border-top:1px dashed var(--line);}
+.course-meta{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:14px;border-top:1px dashed var(--line);gap:10px;}
 .course-price{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--red);font-size:15px;}
 .course-dur{font-size:12px;color:var(--muted);}
 .book-btn{
   background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;font-size:13.5px;font-weight:700;
-  transition:.2s;
+  transition:.2s;white-space:nowrap;
 }
 .book-btn:hover{background:var(--red);}
+.ext-link-btn{
+  background:transparent;color:var(--navy);border:1.5px solid var(--line);padding:9px 16px;border-radius:999px;
+  font-size:13px;font-weight:700;transition:.2s;white-space:nowrap;
+}
+.ext-link-btn:hover{border-color:var(--blue);color:var(--blue);}
+.course-actions-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .empty-note{color:var(--muted);font-size:14.5px;padding:40px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);}
 
 /* ---------- AD SLOTS ---------- */
@@ -437,6 +450,20 @@ footer a:hover{opacity:1;}
 .form-actions button{padding:11px 20px;border-radius:9px;font-weight:700;font-size:13.5px;}
 .save-btn{background:var(--blue);color:#fff;}
 .cancel-btn{background:rgba(255,255,255,.08);color:#fff;}
+.ext-toggle-btn{
+  grid-column:1/-1;background:rgba(46,156,219,.12);color:#2E9CDB;border:1.5px dashed rgba(46,156,219,.45);
+  padding:12px 16px;border-radius:10px;font-weight:700;font-size:13.5px;display:flex;align-items:center;
+  justify-content:center;gap:8px;transition:.2s;
+}
+.ext-toggle-btn:hover{background:rgba(46,156,219,.2);}
+.ext-section{
+  grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;margin-top:2px;
+}
+.ext-section .full{grid-column:1/-1;}
+.ext-check-row{display:flex;gap:20px;flex-wrap:wrap;}
+.ext-check-row label{display:flex;align-items:center;gap:8px;font-size:13px;color:#fff;font-family:'Inter',sans-serif;}
+.ext-check-row input{width:auto;}
 table.bk{width:100%;border-collapse:collapse;font-size:13.5px;}
 table.bk th{text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.5);padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.1);}
 table.bk td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.06);}
@@ -1096,7 +1123,12 @@ function courseFromRow(row){
     cover: row.cover_url || '',
     coverColor: row.cover_color || 'linear-gradient(135deg,#2E9CDB,#16213E)',
     isActive: row.is_active !== false,
-    isPinned: !!row.is_pinned
+    isPinned: !!row.is_pinned,
+    externalLink: row.external_link || '',
+    externalCover: row.external_cover_url || '',
+    externalDesc: row.external_desc || '',
+    hasCertificate: !!row.has_certificate,
+    isAccredited: !!row.is_accredited
   };
 }
 function courseToRow(c, sortOrder){
@@ -1112,7 +1144,12 @@ function courseToRow(c, sortOrder){
     booking_link: '',
     sort_order: sortOrder,
     is_active: c.isActive !== false,
-    is_pinned: !!c.isPinned
+    is_pinned: !!c.isPinned,
+    external_link: c.externalLink || '',
+    external_cover_url: c.externalCover || '',
+    external_desc: c.externalDesc || '',
+    has_certificate: !!c.hasCertificate,
+    is_accredited: !!c.isAccredited
   };
 }
 function bookingFromRow(row){
@@ -1366,11 +1403,17 @@ function courseCoverStyle(course){
 }
 
 function courseCardHtml(course){
+  const hasExt = !!(course.externalLink && course.externalLink.trim());
   return `
   <div class="course-card" onclick="openBooking('${course.id}','course')">
     <div class="course-cover" style="${courseCoverStyle(course)}">
       ${course.isPinned ? '<span class="pin-badge">📌 مميز</span>' : ''}
       <span class="level-badge">${levelLabel(course.level)}</span>
+      ${(course.hasCertificate || course.isAccredited) ? `
+      <div class="course-badges">
+        ${course.hasCertificate ? '<span class="cert-badge">🎓 شهادة</span>' : ''}
+        ${course.isAccredited ? '<span class="accred-badge">✅ معتمد</span>' : ''}
+      </div>` : ''}
     </div>
     <div class="course-body">
       <h3>${escapeHtml(course.title)}</h3>
@@ -1380,7 +1423,10 @@ function courseCardHtml(course){
           <div class="course-price">${escapeHtml(course.price)}</div>
           <div class="course-dur">${escapeHtml(course.duration)}</div>
         </div>
-        <button class="book-btn" onclick="event.stopPropagation();openBooking('${course.id}','course')">احجز الآن</button>
+        <div class="course-actions-row">
+          ${hasExt ? `<button class="ext-link-btn" onclick="event.stopPropagation();window.open('${escapeHtml(course.externalLink)}','_blank')">الرابط الخارجي</button>` : ''}
+          <button class="book-btn" onclick="event.stopPropagation();openBooking('${course.id}','course')">احجز الآن</button>
+        </div>
       </div>
     </div>
   </div>`;
@@ -1983,6 +2029,8 @@ function placeholderThumb(c){
    ADMIN — COURSE FORM (add/edit)
    ============================================================ */
 let tempCoverData = null;
+let tempExternalCoverData = null;
+let externalSectionOpen = false;
 let tempLessonCoverData = null;
 let tempDownloadCoverData = null;
 let tempLogoData = null;
@@ -1992,6 +2040,8 @@ function openCourseForm(courseId){
   editingCourseId = courseId || null;
   const course = courseId ? courses.find(c=>c.id===courseId) : null;
   tempCoverData = course ? course.cover : null;
+  tempExternalCoverData = course ? (course.externalCover || null) : null;
+  externalSectionOpen = !!(course && (course.externalLink || course.externalCover || course.externalDesc || course.hasCertificate || course.isAccredited));
 
   const card = document.getElementById('courseFormCard');
   card.style.display = 'block';
@@ -2035,6 +2085,33 @@ function openCourseForm(courseId){
         <div class="cover-preview" id="coverPreview" style="${tempCoverData ? `background-image:url('${tempCoverData}')` : ''}"></div>
         <p style="color:rgba(255,255,255,.4);font-size:11.5px;margin-top:8px;">ملحوظة: اختيار رابط أو رفع ملف جديد يستبدل الصورة الحالية — آخر خطوة تقوم بها هي التي تُحفظ.</p>
       </div>
+      <button type="button" class="ext-toggle-btn" id="extToggleBtn" onclick="toggleExternalSection()">🔗 معلومات الرابط الخارجي <span id="extToggleArrow">${externalSectionOpen ? '▲' : '▼'}</span></button>
+      <div class="ext-section" id="extSection" style="display:${externalSectionOpen ? 'grid' : 'none'};">
+        <div class="full">
+          <label>الرابط الخارجي (مثال: رابط الكورس على منصة أخرى)</label>
+          <input id="fExternalLink" value="${course ? escapeHtml(course.externalLink || '') : ''}" placeholder="https://example.com/course" dir="ltr">
+        </div>
+        <div class="full">
+          <label>رابط صورة غلاف الرابط الخارجي</label>
+          <input id="fExternalCoverUrl" placeholder="https://i.postimg.cc/xxxxxxxx/cover.jpg" value="${tempExternalCoverData && tempExternalCoverData.startsWith('http') ? escapeHtml(tempExternalCoverData) : ''}" oninput="handleExternalCoverUrlInput(event)" dir="ltr">
+        </div>
+        <div class="full">
+          <label>أو ارفع صورة غلاف الرابط الخارجي من جهازك</label>
+          <input type="file" id="fExternalCoverFile" accept="image/*" onchange="handleExternalCoverUpload(event)">
+        </div>
+        <div class="full">
+          <label>معاينة غلاف الرابط الخارجي</label>
+          <div class="cover-preview" id="externalCoverPreview" style="${tempExternalCoverData ? `background-image:url('${tempExternalCoverData}')` : ''}"></div>
+        </div>
+        <div class="full">
+          <label>وصف الرابط الخارجي</label>
+          <textarea id="fExternalDesc" placeholder="وصف مختصر عن المحتوى الخارجي">${course ? escapeHtml(course.externalDesc || '') : ''}</textarea>
+        </div>
+        <div class="full ext-check-row">
+          <label><input type="checkbox" id="fHasCertificate" ${course?.hasCertificate ? 'checked' : ''}> 🎓 يحتوي على شهادة</label>
+          <label><input type="checkbox" id="fIsAccredited" ${course?.isAccredited ? 'checked' : ''}> ✅ معتمد</label>
+        </div>
+      </div>
     </div>
     <div class="form-actions">
       <button class="save-btn" onclick="saveCourseForm()">${course ? 'حفظ التعديلات' : 'إضافة الكورس'}</button>
@@ -2044,10 +2121,40 @@ function openCourseForm(courseId){
   card.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
+function toggleExternalSection(){
+  externalSectionOpen = !externalSectionOpen;
+  const section = document.getElementById('extSection');
+  const arrow = document.getElementById('extToggleArrow');
+  if(section) section.style.display = externalSectionOpen ? 'grid' : 'none';
+  if(arrow) arrow.textContent = externalSectionOpen ? '▲' : '▼';
+}
+
+function handleExternalCoverUpload(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    tempExternalCoverData = ev.target.result;
+    document.getElementById('externalCoverPreview').style.backgroundImage = `url('${tempExternalCoverData}')`;
+    const urlField = document.getElementById('fExternalCoverUrl');
+    if(urlField) urlField.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleExternalCoverUrlInput(e){
+  const url = e.target.value.trim();
+  tempExternalCoverData = url;
+  const preview = document.getElementById('externalCoverPreview');
+  if(preview) preview.style.backgroundImage = url ? `url('${url}')` : '';
+}
+
 function closeCourseForm(){
   document.getElementById('courseFormCard').style.display = 'none';
   editingCourseId = null;
   tempCoverData = null;
+  tempExternalCoverData = null;
+  externalSectionOpen = false;
 }
 
 function handleCoverUpload(e){
@@ -2076,6 +2183,10 @@ async function saveCourseForm(){
   const duration = document.getElementById('fDuration').value.trim();
   const price = document.getElementById('fPrice').value.trim();
   const desc = document.getElementById('fDesc').value.trim();
+  const externalLink = document.getElementById('fExternalLink').value.trim();
+  const externalDesc = document.getElementById('fExternalDesc').value.trim();
+  const hasCertificate = document.getElementById('fHasCertificate').checked;
+  const isAccredited = document.getElementById('fIsAccredited').checked;
 
   if(!title){
     alert('يرجى إدخال عنوان الكورس على الأقل');
@@ -2084,13 +2195,19 @@ async function saveCourseForm(){
 
   if(editingCourseId){
     const c = courses.find(x=>x.id===editingCourseId);
-    Object.assign(c, {title, level, duration, price, desc, cover: tempCoverData || c.cover});
+    Object.assign(c, {
+      title, level, duration, price, desc, cover: tempCoverData || c.cover,
+      externalLink, externalDesc, hasCertificate, isAccredited,
+      externalCover: tempExternalCoverData || c.externalCover || ''
+    });
   } else {
     courses.push({
       id: 'c_' + Date.now(),
       title, level, duration, price, desc,
       cover: tempCoverData || '',
-      coverColor: ['linear-gradient(135deg,#2E9CDB,#16213E)','linear-gradient(135deg,#C8102E,#16213E)','linear-gradient(135deg,#C9A227,#16213E)'][courses.length % 3]
+      coverColor: ['linear-gradient(135deg,#2E9CDB,#16213E)','linear-gradient(135deg,#C8102E,#16213E)','linear-gradient(135deg,#C9A227,#16213E)'][courses.length % 3],
+      externalLink, externalDesc, hasCertificate, isAccredited,
+      externalCover: tempExternalCoverData || ''
     });
   }
 
