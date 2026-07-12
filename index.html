@@ -62,6 +62,40 @@ img{max-width:100%;display:block;}
   display:flex;align-items:center;justify-content:space-between;gap:20px;
 }
 .brand{display:flex;align-items:center;gap:12px;}
+.nav-search-btn{
+  width:38px;height:38px;border-radius:50%;background:rgba(22,33,62,.06);font-size:16px;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:background .15s;
+}
+.nav-search-btn:hover{background:var(--navy);color:#fff;}
+
+/* ---------- SEARCH OVERLAY ---------- */
+.search-overlay{
+  position:fixed;inset:0;z-index:200;background:rgba(11,18,32,.6);backdrop-filter:blur(4px);
+  display:flex;align-items:flex-start;justify-content:center;padding:70px 20px;
+  opacity:0;pointer-events:none;transition:opacity .18s;
+}
+.search-overlay.show{opacity:1;pointer-events:auto;}
+.search-box{
+  background:var(--paper);border-radius:18px;max-width:640px;width:100%;max-height:80vh;
+  display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+.search-input-row{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);}
+.search-input-row span{display:flex;align-items:center;color:var(--muted);}
+.search-input-row input{flex:1;border:none;outline:none;font-size:16px;background:transparent;font-family:'Inter',sans-serif;}
+.search-close{width:30px;height:30px;border-radius:50%;background:var(--cream);color:var(--navy);flex:0 0 auto;font-size:14px;}
+.search-results{overflow-y:auto;padding:8px;}
+.search-result{
+  display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;cursor:pointer;transition:background .12s;
+}
+.search-result:hover{background:var(--cream);}
+.search-result img{width:46px;height:46px;border-radius:10px;object-fit:cover;flex:0 0 auto;background:var(--navy-deep);}
+.search-result .r-title{font-weight:700;color:var(--navy);font-size:14.5px;}
+.search-result .r-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.search-result .r-type{
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue);background:rgba(46,156,219,.1);
+  padding:2px 8px;border-radius:999px;flex:0 0 auto;
+}
+.search-empty{padding:30px 20px;text-align:center;color:var(--muted);font-size:13.5px;}
 .brand img{width:44px;height:44px;object-fit:contain;border-radius:8px;}
 .brand-text{line-height:1.15;}
 .brand-text b{font-family:'Playfair Display',serif;font-size:17px;color:var(--navy);}
@@ -184,6 +218,10 @@ img{max-width:100%;display:block;}
 .level-badge{
   position:relative;z-index:1;font-family:'JetBrains Mono',monospace;font-size:11px;
   background:rgba(255,255,255,.92);color:var(--navy);padding:4px 10px;border-radius:999px;font-weight:700;
+}
+.pin-badge{
+  position:absolute;top:10px;left:10px;z-index:1;font-family:'JetBrains Mono',monospace;font-size:10.5px;
+  background:#C9A227;color:#16213E;padding:4px 9px;border-radius:999px;font-weight:700;
 }
 .course-body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:10px;flex:1;}
 .course-body h3{font-size:19px;color:var(--navy);}
@@ -341,6 +379,8 @@ footer a:hover{opacity:1;}
 .row-actions button{background:rgba(255,255,255,.08);color:#fff;padding:7px 12px;border-radius:8px;font-size:12px;}
 .row-actions button.danger:hover{background:var(--red);}
 .row-actions button.edit:hover{background:var(--blue);}
+.row-actions button.pin:hover{background:#C9A227;}
+.row-actions button.pin.active{background:#C9A227;color:#16213E;}
 .add-course-btn{background:var(--blue);color:#fff;padding:11px 20px;border-radius:10px;font-weight:700;font-size:13.5px;margin-bottom:18px;}
 .cform{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .cform .full{grid-column:1/-1;}
@@ -420,6 +460,9 @@ table.bk td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.06);}
         <span>ENGLISH LANGUAGE TRAINER</span>
       </div>
     </div>
+    <button class="nav-search-btn" onclick="openSearch()" title="بحث" aria-label="بحث">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    </button>
     <div class="nav-links">
       <button data-nav="home" onclick="go('home')" class="active">الرئيسية</button>
       <button data-nav="about" onclick="go('about')">التعريف</button>
@@ -683,6 +726,18 @@ table.bk td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.06);}
       </div>
     </div>
   </section>
+</div>
+
+<!-- ============ SEARCH OVERLAY ============ -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-box">
+    <div class="search-input-row">
+      <span><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+      <input id="searchInput" placeholder="ابحث عن كورس، درس، أو تحميل..." oninput="runSearch()">
+      <button class="search-close" onclick="closeSearch()">✕</button>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
 </div>
 
 <!-- ============ BOOKING MODAL ============ -->
@@ -971,7 +1026,8 @@ function courseFromRow(row){
     duration: row.duration || '',
     cover: row.cover_url || '',
     coverColor: row.cover_color || 'linear-gradient(135deg,#2E9CDB,#16213E)',
-    isActive: row.is_active !== false
+    isActive: row.is_active !== false,
+    isPinned: !!row.is_pinned
   };
 }
 function courseToRow(c, sortOrder){
@@ -986,7 +1042,8 @@ function courseToRow(c, sortOrder){
     cover_color: c.coverColor || 'linear-gradient(135deg,#2E9CDB,#16213E)',
     booking_link: '',
     sort_order: sortOrder,
-    is_active: c.isActive !== false
+    is_active: c.isActive !== false,
+    is_pinned: !!c.isPinned
   };
 }
 function bookingFromRow(row){
@@ -1017,7 +1074,8 @@ function lessonFromRow(row){
     isOnline: row.is_online !== false,
     city: row.city || '',
     schoolType: row.school_type || 'حكومي',
-    isActive: row.is_active !== false
+    isActive: row.is_active !== false,
+    isPinned: !!row.is_pinned
   };
 }
 function lessonToRow(l, sortOrder){
@@ -1037,7 +1095,8 @@ function lessonToRow(l, sortOrder){
     city: l.isOnline ? '' : (l.city || 'المنصورة'),
     school_type: l.schoolType || 'حكومي',
     sort_order: sortOrder,
-    is_active: l.isActive !== false
+    is_active: l.isActive !== false,
+    is_pinned: !!l.isPinned
   };
 }
 function downloadFromRow(row){
@@ -1047,7 +1106,8 @@ function downloadFromRow(row){
     desc: row.description || '',
     cover: row.cover_url || '',
     link: row.link_url || '',
-    isActive: row.is_active !== false
+    isActive: row.is_active !== false,
+    isPinned: !!row.is_pinned
   };
 }
 function downloadToRow(d, sortOrder){
@@ -1058,7 +1118,8 @@ function downloadToRow(d, sortOrder){
     cover_url: d.cover || '',
     link_url: d.link || '',
     sort_order: sortOrder,
-    is_active: d.isActive !== false
+    is_active: d.isActive !== false,
+    is_pinned: !!d.isPinned
   };
 }
 function settingsFromRow(row){
@@ -1083,15 +1144,15 @@ function settingsFromRow(row){
 }
 
 async function loadCourses(){
-  const { data, error } = await sb.from('courses').select('*').order('sort_order', { ascending: true });
+  const { data, error } = await sb.from('courses').select('*').order('is_pinned', { ascending: false }).order('sort_order', { ascending: true });
   courses = error ? [] : (data || []).map(courseFromRow);
 }
 async function loadLessons(){
-  const { data, error } = await sb.from('lessons').select('*').order('sort_order', { ascending: true });
+  const { data, error } = await sb.from('lessons').select('*').order('is_pinned', { ascending: false }).order('sort_order', { ascending: true });
   lessons = error ? [] : (data || []).map(lessonFromRow);
 }
 async function loadDownloads(){
-  const { data, error } = await sb.from('downloads').select('*').order('sort_order', { ascending: true });
+  const { data, error } = await sb.from('downloads').select('*').order('is_pinned', { ascending: false }).order('sort_order', { ascending: true });
   downloads = error ? [] : (data || []).map(downloadFromRow);
 }
 async function loadSettings(){
@@ -1222,6 +1283,7 @@ function courseCardHtml(course){
   return `
   <div class="course-card" onclick="openBooking('${course.id}','course')">
     <div class="course-cover" style="${courseCoverStyle(course)}">
+      ${course.isPinned ? '<span class="pin-badge">📌 مميز</span>' : ''}
       <span class="level-badge">${levelLabel(course.level)}</span>
     </div>
     <div class="course-body">
@@ -1248,6 +1310,7 @@ function lessonCardHtml(lesson){
   return `
   <div class="course-card" onclick="openBooking('${lesson.id}','lesson')">
     <div class="course-cover" style="${lessonCoverStyle(lesson)}">
+      ${lesson.isPinned ? '<span class="pin-badge">📌 مميز</span>' : ''}
       <span class="level-badge">${stageLabel(lesson.stage)}</span>
     </div>
     <div class="course-body">
@@ -1272,7 +1335,9 @@ function lessonCardHtml(lesson){
 function downloadCardHtml(d){
   return `
   <div class="course-card" onclick="event.preventDefault();window.open('${escapeHtml(d.link)}','_blank')">
-    <div class="course-cover" style="${d.cover ? `background-image:url('${d.cover}')` : "background:linear-gradient(135deg,#2E9CDB,#16213E)"}"></div>
+    <div class="course-cover" style="${d.cover ? `background-image:url('${d.cover}')` : "background:linear-gradient(135deg,#2E9CDB,#16213E)"}">
+      ${d.isPinned ? '<span class="pin-badge">📌 مميز</span>' : ''}
+    </div>
     <div class="course-body">
       <h3>${escapeHtml(d.title)}</h3>
       <p>${escapeHtml(d.desc)}</p>
@@ -1494,6 +1559,109 @@ function escapeHtml(str=''){
 }
 
 /* ============================================================
+   GLOBAL SEARCH — fuzzy / similarity match (not exact text)
+   ============================================================ */
+function normalizeArabic(str=''){
+  return str.toString()
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')   // diacritics + tatweel
+    .replace(/[إأآا]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function bigrams(str){
+  const s = '  ' + str + ' ';
+  const grams = [];
+  for(let i=0;i<s.length-1;i++) grams.push(s.slice(i,i+2));
+  return grams;
+}
+function similarity(a, b){
+  if(!a || !b) return 0;
+  if(a===b) return 1;
+  if(b.includes(a) || a.includes(b)) return 0.92;
+  const ga = bigrams(a), gb = bigrams(b);
+  let matches = 0;
+  const gbCopy = gb.slice();
+  ga.forEach(g=>{
+    const idx = gbCopy.indexOf(g);
+    if(idx !== -1){ matches++; gbCopy.splice(idx,1); }
+  });
+  return (2 * matches) / (ga.length + gb.length);
+}
+function buildSearchIndex(){
+  const idx = [];
+  courses.forEach(c=>idx.push({ type:'course', label:'كورس', id:c.id, title:c.title, desc:c.desc, cover:c.cover, coverColor:c.coverColor, meta:levelLabel(c.level)+' · '+c.price }));
+  lessons.forEach(l=>idx.push({ type:'lesson', label:'درس', id:l.id, title:l.title, desc:l.desc, cover:l.cover, coverColor:l.coverColor, meta:stageLabel(l.stage)+(l.grade?' · '+l.grade:'')+' · '+l.price }));
+  downloads.forEach(d=>idx.push({ type:'download', label:'تحميل', id:d.id, title:d.title, desc:d.desc, cover:d.cover, coverColor:'linear-gradient(135deg,#2E9CDB,#16213E)', meta:'تحميل / رابط' }));
+  return idx;
+}
+function openSearch(){
+  document.getElementById('searchOverlay').classList.add('show');
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  document.getElementById('searchResults').innerHTML = '';
+  setTimeout(()=>input.focus(), 50);
+}
+function closeSearch(){
+  document.getElementById('searchOverlay').classList.remove('show');
+}
+function goToSearchResult(type, id){
+  closeSearch();
+  if(type==='course'){ go('courses'); setTimeout(()=>openBooking(id,'course'), 150); }
+  else if(type==='lesson'){ go('lessons'); setTimeout(()=>openBooking(id,'lesson'), 150); }
+  else if(type==='download'){
+    go('downloads');
+    const d = downloads.find(x=>x.id===id);
+    if(d && d.link) window.open(d.link, '_blank');
+  }
+}
+function runSearch(){
+  const raw = document.getElementById('searchInput').value.trim();
+  const resultsEl = document.getElementById('searchResults');
+  if(!raw){ resultsEl.innerHTML = ''; return; }
+  const q = normalizeArabic(raw);
+  const index = buildSearchIndex();
+  const scored = index.map(item=>{
+    const nTitle = normalizeArabic(item.title);
+    const nDesc = normalizeArabic(item.desc);
+    const titleScore = similarity(q, nTitle);
+    const descScore = similarity(q, nDesc) * 0.5;
+    // also check per-word similarity so a query matches one word within a longer title
+    let wordScore = 0;
+    nTitle.split(' ').forEach(w=>{ wordScore = Math.max(wordScore, similarity(q, w)); });
+    return { item, score: Math.max(titleScore, descScore, wordScore * 0.85) };
+  }).filter(x=>x.score > 0.28)
+    .sort((a,b)=>b.score - a.score)
+    .slice(0, 20);
+
+  if(scored.length===0){
+    resultsEl.innerHTML = `<div class="search-empty">لا توجد نتائج مطابقة لـ "${escapeHtml(raw)}"</div>`;
+    return;
+  }
+  resultsEl.innerHTML = scored.map(({item})=>`
+    <div class="search-result" onclick="goToSearchResult('${item.type}','${item.id}')">
+      <img src="${item.cover || placeholderThumb(item)}" alt="" style="${!item.cover ? `background:${item.coverColor}` : ''}">
+      <div style="flex:1;min-width:0;">
+        <div class="r-title">${escapeHtml(item.title)}</div>
+        <div class="r-meta">${escapeHtml(item.meta)}</div>
+      </div>
+      <span class="r-type">${item.label}</span>
+    </div>
+  `).join('');
+}
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closeSearch();
+});
+document.addEventListener('click', e=>{
+  if(e.target.id === 'searchOverlay') closeSearch();
+});
+
+/* ============================================================
    BOOKING FLOW
    ============================================================ */
 let activeCourseForBooking = null;
@@ -1702,13 +1870,14 @@ function renderAdminCourses(){
     <div class="admin-course-row">
       <img src="${c.cover || placeholderThumb(c)}" alt="">
       <div>
-        <div style="font-weight:700;color:#fff;">${escapeHtml(c.title)}</div>
+        <div style="font-weight:700;color:#fff;">${escapeHtml(c.title)} ${c.isPinned ? '<span style="color:#C9A227;font-size:11px;">📌 مثبت</span>' : ''}</div>
         <div class="lvl">${levelLabel(c.level)}</div>
       </div>
       <div>${escapeHtml(c.price)}</div>
       <div>${escapeHtml(c.duration)}</div>
       <div style="color:rgba(255,255,255,.5);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.desc).slice(0,40)}</div>
       <div class="row-actions">
+        <button class="pin ${c.isPinned?'active':''}" onclick="toggleCoursePinned('${c.id}')" title="تثبيت الغلاف أعلى القائمة">📌</button>
         <button class="edit" onclick="openCourseForm('${c.id}')">تعديل</button>
         <button class="danger" onclick="deleteCourse('${c.id}')">حذف</button>
       </div>
@@ -1848,6 +2017,14 @@ async function deleteCourse(id){
   await saveCourses();
   renderAll();
 }
+async function toggleCoursePinned(id){
+  const c = courses.find(x=>x.id===id);
+  if(!c) return;
+  c.isPinned = !c.isPinned;
+  await saveCourses();
+  await loadCourses();
+  renderAll();
+}
 
 /* ============================================================
    ADMIN — LESSONS
@@ -1863,13 +2040,14 @@ function renderAdminLessons(){
     <div class="admin-course-row">
       <img src="${l.cover || placeholderThumb(l)}" alt="">
       <div>
-        <div style="font-weight:700;color:#fff;">${escapeHtml(l.title)}</div>
+        <div style="font-weight:700;color:#fff;">${escapeHtml(l.title)} ${l.isPinned ? '<span style="color:#C9A227;font-size:11px;">📌 مثبت</span>' : ''}</div>
         <div class="lvl">${stageLabel(l.stage)}${l.grade ? ' · '+escapeHtml(l.grade) : ''} · ${l.isOnline?'أونلاين':'حضوري - '+escapeHtml(l.city||'المنصورة')} · ${schoolTypeLabel(l.schoolType)}</div>
       </div>
       <div>${escapeHtml(l.price)}</div>
       <div>${escapeHtml(l.duration)}</div>
       <div style="color:rgba(255,255,255,.5);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(l.desc).slice(0,40)}</div>
       <div class="row-actions">
+        <button class="pin ${l.isPinned?'active':''}" onclick="toggleLessonPinned('${l.id}')" title="تثبيت الغلاف أعلى القائمة">📌</button>
         <button class="edit" onclick="openLessonForm('${l.id}')">تعديل</button>
         <button class="danger" onclick="deleteLesson('${l.id}')">حذف</button>
       </div>
@@ -2033,6 +2211,14 @@ async function deleteLesson(id){
   await saveLessons();
   renderAll();
 }
+async function toggleLessonPinned(id){
+  const l = lessons.find(x=>x.id===id);
+  if(!l) return;
+  l.isPinned = !l.isPinned;
+  await saveLessons();
+  await loadLessons();
+  renderAll();
+}
 
 /* ============================================================
    ADMIN — DOWNLOADS
@@ -2048,11 +2234,12 @@ function renderAdminDownloads(){
     <div class="admin-course-row">
       <img src="${d.cover || placeholderThumb(d)}" alt="">
       <div>
-        <div style="font-weight:700;color:#fff;">${escapeHtml(d.title)}</div>
+        <div style="font-weight:700;color:#fff;">${escapeHtml(d.title)} ${d.isPinned ? '<span style="color:#C9A227;font-size:11px;">📌 مثبت</span>' : ''}</div>
         <div class="lvl">${escapeHtml(d.desc).slice(0,40)}</div>
       </div>
       <div style="color:rgba(255,255,255,.5);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;grid-column:span 2;">${escapeHtml(d.link)}</div>
       <div class="row-actions">
+        <button class="pin ${d.isPinned?'active':''}" onclick="toggleDownloadPinned('${d.id}')" title="تثبيت الغلاف أعلى القائمة">📌</button>
         <button class="edit" onclick="openDownloadForm('${d.id}')">تعديل</button>
         <button class="danger" onclick="deleteDownload('${d.id}')">حذف</button>
       </div>
@@ -2140,6 +2327,14 @@ async function deleteDownload(id){
   if(!confirm('هل تريد حذف هذا التحميل؟')) return;
   downloads = downloads.filter(d=>d.id!==id);
   await saveDownloads();
+  renderAll();
+}
+async function toggleDownloadPinned(id){
+  const d = downloads.find(x=>x.id===id);
+  if(!d) return;
+  d.isPinned = !d.isPinned;
+  await saveDownloads();
+  await loadDownloads();
   renderAll();
 }
 
