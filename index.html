@@ -253,10 +253,10 @@ img{max-width:100%;display:block;}
 }
 .course-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(11,18,32,0.14);}
 .course-cover{
-  position:relative;height:250px;background-size:cover;background-position:center;
+  position:relative;height:290px;background-size:cover;background-position:center;
   display:flex;align-items:flex-end;padding:14px;
 }
-.course-cover:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,18,32,0) 58%,rgba(11,18,32,.72));}
+.course-cover:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,18,32,0) 72%,rgba(11,18,32,.5) 100%);}
 .level-badge{
   position:relative;z-index:1;font-family:'JetBrains Mono',monospace;font-size:11px;
   background:rgba(255,255,255,.92);color:var(--navy);padding:4px 10px;border-radius:999px;font-weight:700;
@@ -265,11 +265,19 @@ img{max-width:100%;display:block;}
   position:absolute;top:10px;left:10px;z-index:1;font-family:'JetBrains Mono',monospace;font-size:10.5px;
   background:#C9A227;color:#16213E;padding:4px 9px;border-radius:999px;font-weight:700;
 }
+.course-badges{position:absolute;top:10px;right:10px;z-index:1;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.cert-badge,.accred-badge{
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;
+  display:flex;align-items:center;gap:4px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+.cert-badge{background:rgba(46,156,219,.95);color:#fff;}
+.accred-badge{background:rgba(46,163,89,.95);color:#fff;}
 .course-body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:10px;flex:1;}
 .course-body h3{font-size:19px;color:var(--navy);}
 .course-body p{margin:0;color:var(--muted);font-size:13.8px;line-height:1.7;}
 .course-meta{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:14px;border-top:1px dashed var(--line);gap:10px;}
 .course-price{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--red);font-size:15px;}
+.course-price.free{color:#2EA359;}
 .course-dur{font-size:12px;color:var(--muted);}
 .book-btn{
   background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;font-size:13.5px;font-weight:700;
@@ -437,7 +445,7 @@ footer a:hover{opacity:1;}
   border-radius:8px;font-family:'Inter',sans-serif;font-size:13.5px;
 }
 .cform textarea{min-height:70px;resize:vertical;}
-.cover-preview{width:100%;height:120px;border-radius:10px;background-size:cover;background-position:center;background-color:#0b1220;border:1px dashed rgba(255,255,255,.2);margin-top:8px;}
+.cover-preview{width:100%;height:190px;border-radius:10px;background-size:cover;background-position:center;background-color:#0b1220;border:1px dashed rgba(255,255,255,.2);margin-top:8px;}
 .form-actions{display:flex;gap:10px;margin-top:18px;}
 .form-actions button{padding:11px 20px;border-radius:9px;font-weight:700;font-size:13.5px;}
 .save-btn{background:var(--blue);color:#fff;}
@@ -448,6 +456,9 @@ footer a:hover{opacity:1;}
   justify-content:center;gap:8px;transition:.2s;width:100%;margin-bottom:16px;
 }
 .ext-toggle-btn:hover{background:rgba(46,156,219,.2);}
+.check-row{display:flex;gap:20px;flex-wrap:wrap;}
+.check-row label{display:flex;align-items:center;gap:8px;font-size:13px;color:#fff;font-family:'Inter',sans-serif;}
+.check-row input{width:auto;}
 table.bk{width:100%;border-collapse:collapse;font-size:13.5px;}
 table.bk th{text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.5);padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.1);}
 table.bk td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.06);}
@@ -1109,7 +1120,11 @@ function courseFromRow(row){
     isActive: row.is_active !== false,
     isPinned: !!row.is_pinned,
     isExternal: !!row.is_external,
-    externalLink: row.external_link || ''
+    externalLink: row.external_link || '',
+    pricingType: row.pricing_type || 'paid',
+    certPrice: row.cert_price || '',
+    hasCertificate: !!row.has_certificate,
+    isAccredited: !!row.is_accredited
   };
 }
 function courseToRow(c, sortOrder){
@@ -1127,7 +1142,11 @@ function courseToRow(c, sortOrder){
     is_active: c.isActive !== false,
     is_pinned: !!c.isPinned,
     is_external: !!c.isExternal,
-    external_link: c.externalLink || ''
+    external_link: c.externalLink || '',
+    pricing_type: c.pricingType || 'paid',
+    cert_price: c.certPrice || '',
+    has_certificate: !!c.hasCertificate,
+    is_accredited: !!c.isAccredited
   };
 }
 function bookingFromRow(row){
@@ -1380,6 +1399,17 @@ function courseCoverStyle(course){
   return `background:${course.coverColor || 'linear-gradient(135deg,#2E9CDB,#16213E)'}`;
 }
 
+function coursePriceHtml(course){
+  const type = course.pricingType || 'paid';
+  if(type === 'free'){
+    return `<div class="course-price free">مجاني بالكامل</div>`;
+  }
+  if(type === 'free_cert'){
+    return `<div class="course-price free">مجاني</div><div class="course-dur">الشهادة: ${escapeHtml(course.certPrice || '-')}</div>`;
+  }
+  return `<div class="course-price">${escapeHtml(course.price)}</div><div class="course-dur">${escapeHtml(course.duration)}</div>`;
+}
+
 function courseCardHtml(course){
   if(course.isExternal){
     const link = escapeHtml(course.externalLink || '');
@@ -1402,14 +1432,18 @@ function courseCardHtml(course){
     <div class="course-cover" style="${courseCoverStyle(course)}">
       ${course.isPinned ? '<span class="pin-badge">📌 مميز</span>' : ''}
       <span class="level-badge">${levelLabel(course.level)}</span>
+      ${(course.hasCertificate || course.isAccredited) ? `
+      <div class="course-badges">
+        ${course.hasCertificate ? '<span class="cert-badge">🎓 شهادة</span>' : ''}
+        ${course.isAccredited ? '<span class="accred-badge">✅ معتمد</span>' : ''}
+      </div>` : ''}
     </div>
     <div class="course-body">
       <h3>${escapeHtml(course.title)}</h3>
       <p>${escapeHtml(course.desc)}</p>
       <div class="course-meta">
         <div>
-          <div class="course-price">${escapeHtml(course.price)}</div>
-          <div class="course-dur">${escapeHtml(course.duration)}</div>
+          ${coursePriceHtml(course)}
         </div>
         <button class="book-btn" onclick="event.stopPropagation();openBooking('${course.id}','course')">احجز الآن</button>
       </div>
@@ -1979,6 +2013,13 @@ async function deleteBooking(id){
   renderAdmin();
 }
 
+function adminCoursePriceLabel(c){
+  if(c.isExternal) return '-';
+  if(c.pricingType === 'free') return 'مجاني بالكامل';
+  if(c.pricingType === 'free_cert') return `مجاني (شهادة: ${escapeHtml(c.certPrice || '-')})`;
+  return escapeHtml(c.price);
+}
+
 function renderAdminCourses(){
   const wrap = document.getElementById('adminCourseList');
   if(courses.length===0){
@@ -1989,10 +2030,10 @@ function renderAdminCourses(){
     <div class="admin-course-row">
       <img src="${c.cover || placeholderThumb(c)}" alt="">
       <div>
-        <div style="font-weight:700;color:#fff;">${escapeHtml(c.title)} ${c.isPinned ? '<span style="color:#C9A227;font-size:11px;">📌 مثبت</span>' : ''} ${c.isExternal ? '<span style="color:#2E9CDB;font-size:11px;">🔗 رابط خارجي</span>' : ''}</div>
+        <div style="font-weight:700;color:#fff;">${escapeHtml(c.title)} ${c.isPinned ? '<span style="color:#C9A227;font-size:11px;">📌 مثبت</span>' : ''} ${c.isExternal ? '<span style="color:#2E9CDB;font-size:11px;">🔗 رابط خارجي</span>' : ''} ${c.hasCertificate ? '<span style="color:#2E9CDB;font-size:11px;">🎓</span>' : ''} ${c.isAccredited ? '<span style="color:#2EA359;font-size:11px;">✅</span>' : ''}</div>
         <div class="lvl">${c.isExternal ? 'رابط خارجي' : levelLabel(c.level)}</div>
       </div>
-      <div>${escapeHtml(c.price)}</div>
+      <div>${adminCoursePriceLabel(c)}</div>
       <div>${escapeHtml(c.duration)}</div>
       <div style="color:rgba(255,255,255,.5);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.desc).slice(0,40)}</div>
       <div class="row-actions">
@@ -2064,12 +2105,24 @@ function courseFormFieldsHtml(course){
       <input id="fDuration" value="${course ? escapeHtml(course.duration) : ''}" placeholder="مثال: 8 أسابيع">
     </div>
     <div>
-      <label>السعر</label>
-      <input id="fPrice" value="${course ? escapeHtml(course.price) : ''}" placeholder="مثال: 600 ج.م">
+      <label>نوع التسعير</label>
+      <select id="fPricingType" onchange="updateCoursePricingUI()">
+        <option value="paid" ${(!course || course.pricingType==='paid' || !course.pricingType)?'selected':''}>مدفوع</option>
+        <option value="free" ${course?.pricingType==='free'?'selected':''}>مجاني بالكامل</option>
+        <option value="free_cert" ${course?.pricingType==='free_cert'?'selected':''}>مجاني + شهادة مدفوعة</option>
+      </select>
+    </div>
+    <div id="priceFieldWrap">
+      <label id="priceFieldLabel">${course?.pricingType==='free_cert' ? 'سعر الشهادة' : 'السعر'}</label>
+      <input id="fPrice" value="${course ? escapeHtml(course.pricingType==='free_cert' ? (course.certPrice||'') : course.price) : ''}" placeholder="مثال: 600 ج.م" style="display:${course?.pricingType==='free' ? 'none' : 'block'};">
     </div>
     <div class="full">
       <label>وصف مختصر</label>
       <textarea id="fDesc" placeholder="وصف قصير عن الكورس">${course ? escapeHtml(course.desc) : ''}</textarea>
+    </div>
+    <div class="full check-row">
+      <label><input type="checkbox" id="fHasCertificate" ${course?.hasCertificate ? 'checked' : ''}> 🎓 يحتوي على شهادة</label>
+      <label><input type="checkbox" id="fIsAccredited" ${course?.isAccredited ? 'checked' : ''}> ✅ معتمد</label>
     </div>
     <div class="full">
       <label>رابط صورة الغلاف (من postimages.cc أو أي رابط صورة مباشر)</label>
@@ -2085,6 +2138,22 @@ function courseFormFieldsHtml(course){
       <p style="color:rgba(255,255,255,.4);font-size:11.5px;margin-top:8px;">ملحوظة: اختيار رابط أو رفع ملف جديد يستبدل الصورة الحالية — آخر خطوة تقوم بها هي التي تُحفظ.</p>
     </div>
   `;
+}
+
+function updateCoursePricingUI(){
+  const type = document.getElementById('fPricingType').value;
+  const label = document.getElementById('priceFieldLabel');
+  const input = document.getElementById('fPrice');
+  if(type === 'free'){
+    input.style.display = 'none';
+    input.value = '';
+  } else if(type === 'free_cert'){
+    input.style.display = 'block';
+    label.textContent = 'سعر الشهادة';
+  } else {
+    input.style.display = 'block';
+    label.textContent = 'السعر';
+  }
 }
 
 function openCourseForm(courseId){
@@ -2182,18 +2251,27 @@ async function saveCourseForm(){
   } else {
     const level = document.getElementById('fLevel').value;
     const duration = document.getElementById('fDuration').value.trim();
-    const price = document.getElementById('fPrice').value.trim();
+    const pricingType = document.getElementById('fPricingType').value;
+    const priceFieldValue = document.getElementById('fPrice').value.trim();
+    const price = pricingType === 'paid' ? priceFieldValue : '';
+    const certPrice = pricingType === 'free_cert' ? priceFieldValue : '';
     const desc = document.getElementById('fDesc').value.trim();
+    const hasCertificate = document.getElementById('fHasCertificate').checked;
+    const isAccredited = document.getElementById('fIsAccredited').checked;
     if(editingCourseId){
       const c = courses.find(x=>x.id===editingCourseId);
-      Object.assign(c, {title, level, duration, price, desc, cover: tempCoverData || c.cover, isExternal: false, externalLink: ''});
+      Object.assign(c, {
+        title, level, duration, price, desc, cover: tempCoverData || c.cover, isExternal: false, externalLink: '',
+        pricingType, certPrice, hasCertificate, isAccredited
+      });
     } else {
       courses.push({
         id: 'c_' + Date.now(),
         title, level, duration, price, desc,
         cover: tempCoverData || '',
         coverColor: ['linear-gradient(135deg,#2E9CDB,#16213E)','linear-gradient(135deg,#C8102E,#16213E)','linear-gradient(135deg,#C9A227,#16213E)'][courses.length % 3],
-        isExternal: false, externalLink: ''
+        isExternal: false, externalLink: '',
+        pricingType, certPrice, hasCertificate, isAccredited
       });
     }
   }
