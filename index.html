@@ -894,6 +894,30 @@ table.bk td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.06);}
   </div>
 </div>
 
+<!-- ============ LESSON DETAILS MODAL ============ -->
+<div class="overlay" id="lessonDetailsOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeLessonDetails()">✕</button>
+    <div class="course-cover" id="lessonDetailsCover" style="height:200px;border-radius:12px;margin-bottom:16px;"></div>
+    <h3 id="lessonDetailsTitle" style="font-size:21px;color:var(--navy);margin-bottom:8px;"></h3>
+    <div id="lessonDetailsTags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+    <p id="lessonDetailsDesc" style="color:var(--muted);font-size:14.5px;line-height:1.8;margin-bottom:16px;"></p>
+    <div id="lessonDetailsMeta" style="margin-bottom:18px;"></div>
+    <button class="modal-submit" id="lessonDetailsActionBtn">احجز الآن</button>
+  </div>
+</div>
+
+<!-- ============ DOWNLOAD DETAILS MODAL ============ -->
+<div class="overlay" id="downloadDetailsOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeDownloadDetails()">✕</button>
+    <div class="course-cover" id="downloadDetailsCover" style="height:200px;border-radius:12px;margin-bottom:16px;"></div>
+    <h3 id="downloadDetailsTitle" style="font-size:21px;color:var(--navy);margin-bottom:8px;"></h3>
+    <p id="downloadDetailsDesc" style="color:var(--muted);font-size:14.5px;line-height:1.8;margin-bottom:18px;"></p>
+    <button class="modal-submit" id="downloadDetailsActionBtn">تحميل / فتح الرابط</button>
+  </div>
+</div>
+
 <!-- ============ ADMIN VIEW ============ -->
 <div class="view" id="view-admin">
   <div id="adminLoginWrap">
@@ -1456,45 +1480,22 @@ function lessonCoverStyle(lesson){
 }
 
 function lessonCardHtml(lesson){
-  const locLabel = lesson.isOnline ? 'أونلاين' : `حضوري — ${escapeHtml(lesson.city || 'المنصورة')}، ${escapeHtml(lesson.country || 'مصر')}`;
   return `
-  <div class="course-card" onclick="openBooking('${lesson.id}','lesson')">
+  <div class="course-card" onclick="openLessonDetails('${lesson.id}')">
     <div class="course-cover" style="${lessonCoverStyle(lesson)}">
       ${lesson.isPinned ? '<span class="pin-badge">📌 مميز</span>' : ''}
       <span class="level-badge">${stageLabel(lesson.stage)}</span>
-    </div>
-    <div class="course-body">
-      <h3>${escapeHtml(lesson.title)}</h3>
-      <p>${escapeHtml(lesson.desc)}</p>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;">
-        ${lesson.grade ? `<span class="flag-chip">${escapeHtml(lesson.grade)}</span>` : ''}
-        <span class="flag-chip">${locLabel}</span>
-        <span class="flag-chip">${schoolTypeLabel(lesson.schoolType)}</span>
-      </div>
-      <div class="course-meta">
-        <div>
-          <div class="course-price">${escapeHtml(lesson.price)}</div>
-          <div class="course-dur">${escapeHtml(lesson.duration)}</div>
-        </div>
-        <button class="book-btn" onclick="event.stopPropagation();openBooking('${lesson.id}','lesson')">احجز الآن</button>
-      </div>
+      <div class="course-cover-caption"><h3>${escapeHtml(lesson.title)}</h3></div>
     </div>
   </div>`;
 }
 
 function downloadCardHtml(d){
   return `
-  <div class="course-card" onclick="event.preventDefault();window.open('${escapeHtml(d.link)}','_blank')">
+  <div class="course-card" onclick="openDownloadDetails('${d.id}')">
     <div class="course-cover" style="${d.cover ? `background-image:url('${d.cover}')` : "background:linear-gradient(135deg,#2E9CDB,#16213E)"}">
       ${d.isPinned ? '<span class="pin-badge">📌 مميز</span>' : ''}
-    </div>
-    <div class="course-body">
-      <h3>${escapeHtml(d.title)}</h3>
-      <p>${escapeHtml(d.desc)}</p>
-      <div class="course-meta">
-        <div></div>
-        <button class="book-btn" onclick="event.stopPropagation();window.open('${escapeHtml(d.link)}','_blank')">تحميل / فتح الرابط</button>
-      </div>
+      <div class="course-cover-caption"><h3>${escapeHtml(d.title)}</h3></div>
     </div>
   </div>`;
 }
@@ -1764,13 +1765,9 @@ function closeSearch(){
 }
 function goToSearchResult(type, id){
   closeSearch();
-  if(type==='course'){ go('courses'); setTimeout(()=>openBooking(id,'course'), 150); }
-  else if(type==='lesson'){ go('lessons'); setTimeout(()=>openBooking(id,'lesson'), 150); }
-  else if(type==='download'){
-    go('downloads');
-    const d = downloads.find(x=>x.id===id);
-    if(d && d.link) window.open(d.link, '_blank');
-  }
+  if(type==='course'){ go('courses'); setTimeout(()=>openCourseDetails(id), 150); }
+  else if(type==='lesson'){ go('lessons'); setTimeout(()=>openLessonDetails(id), 150); }
+  else if(type==='download'){ go('downloads'); setTimeout(()=>openDownloadDetails(id), 150); }
 }
 function runSearch(){
   const raw = document.getElementById('searchInput').value.trim();
@@ -1856,6 +1853,61 @@ function openCourseDetails(courseId){
 }
 function closeCourseDetails(){
   document.getElementById('courseDetailsOverlay').classList.remove('show');
+}
+
+function openLessonDetails(lessonId){
+  const lesson = lessons.find(l=>l.id===lessonId);
+  if(!lesson) return;
+
+  document.getElementById('lessonDetailsCover').style.cssText =
+    'height:200px;border-radius:12px;margin-bottom:16px;' + lessonCoverStyle(lesson);
+  document.getElementById('lessonDetailsTitle').textContent = lesson.title;
+
+  const locLabel = lesson.isOnline ? 'أونلاين' : `حضوري — ${lesson.city || 'المنصورة'}، ${lesson.country || 'مصر'}`;
+  let tagsHtml = '';
+  if(lesson.grade) tagsHtml += `<span class="flag-chip">${escapeHtml(lesson.grade)}</span>`;
+  tagsHtml += `<span class="flag-chip">${escapeHtml(locLabel)}</span>`;
+  tagsHtml += `<span class="flag-chip">${escapeHtml(schoolTypeLabel(lesson.schoolType))}</span>`;
+  document.getElementById('lessonDetailsTags').innerHTML = tagsHtml;
+
+  const descEl = document.getElementById('lessonDetailsDesc');
+  descEl.textContent = lesson.desc || '';
+  descEl.style.display = lesson.desc ? 'block' : 'none';
+
+  document.getElementById('lessonDetailsMeta').innerHTML =
+    `<div class="course-meta" style="border:none;padding:0;margin:0;"><div><div class="course-price">${escapeHtml(lesson.price)}</div><div class="course-dur">${escapeHtml(lesson.duration)}</div></div></div>`;
+
+  document.getElementById('lessonDetailsActionBtn').onclick = function(){
+    closeLessonDetails();
+    openBooking(lesson.id, 'lesson');
+  };
+
+  document.getElementById('lessonDetailsOverlay').classList.add('show');
+}
+function closeLessonDetails(){
+  document.getElementById('lessonDetailsOverlay').classList.remove('show');
+}
+
+function openDownloadDetails(downloadId){
+  const d = downloads.find(x=>x.id===downloadId);
+  if(!d) return;
+
+  document.getElementById('downloadDetailsCover').style.cssText =
+    'height:200px;border-radius:12px;margin-bottom:16px;' + (d.cover ? `background-image:url('${d.cover}')` : 'background:linear-gradient(135deg,#2E9CDB,#16213E)');
+  document.getElementById('downloadDetailsTitle').textContent = d.title;
+
+  const descEl = document.getElementById('downloadDetailsDesc');
+  descEl.textContent = d.desc || '';
+  descEl.style.display = d.desc ? 'block' : 'none';
+
+  document.getElementById('downloadDetailsActionBtn').onclick = function(){
+    window.open(d.link, '_blank');
+  };
+
+  document.getElementById('downloadDetailsOverlay').classList.add('show');
+}
+function closeDownloadDetails(){
+  document.getElementById('downloadDetailsOverlay').classList.remove('show');
 }
 
 function openBooking(itemId, type){
